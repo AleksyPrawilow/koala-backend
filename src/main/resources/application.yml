@@ -17,3 +17,7 @@ spring:
     locations: classpath:db/migration
   application:
     name: koala
+  web:
+    error:
+      include-stacktrace: never
+      include-message: always
