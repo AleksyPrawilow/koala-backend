@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: koala-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-koala}
+      POSTGRES_USER: ${DB_USER:-koala_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-koala_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-koala_user} -d ${DB_NAME:-koala}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: koala-app:latest
+    container_name: koala-app
+    profiles: ["full"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-koala}
+      DB_USER: ${DB_USER:-koala_user}
+      DB_PASSWORD: ${DB_PASSWORD:-koala_password}
+
+volumes:
+  postgres_data:
