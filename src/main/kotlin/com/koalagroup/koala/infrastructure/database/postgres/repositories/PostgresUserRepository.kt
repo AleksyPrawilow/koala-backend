@@ -1,6 +1,7 @@
 package com.koalagroup.koala.infrastructure.database.postgres.repositories
 
 import com.koalagroup.koala.domain.entities.User
+import com.koalagroup.koala.domain.entities.UserStatus
 import com.koalagroup.koala.domain.queries.PagedResult
 import com.koalagroup.koala.domain.queries.SortDirection
 import com.koalagroup.koala.domain.queries.UserQuery
@@ -12,6 +13,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import java.util.UUID
 
 @Repository
 class PostgresUserRepository(
@@ -20,6 +22,21 @@ class PostgresUserRepository(
     override fun create(user: User): User {
         jpaRepository.save(user.toEntity())
         return user
+    }
+
+    @Transactional(readOnly = true)
+    override fun findById(id: UUID): User? {
+        return jpaRepository.findById(id).map { it.toDomain() }.orElse(null)
+    }
+
+    @Transactional
+    override fun update(user: User): User {
+        return jpaRepository.save(user.toEntity()).toDomain()
+    }
+
+    @Transactional(readOnly = true)
+    override fun countByRoleAndStatus(roleName: String, status: UserStatus): Long {
+        return jpaRepository.countByRoleNameAndStatus(roleName, status)
     }
 
     @Transactional(readOnly = true)

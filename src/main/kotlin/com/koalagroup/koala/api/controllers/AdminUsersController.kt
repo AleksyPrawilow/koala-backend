@@ -1,25 +1,37 @@
 package com.koalagroup.koala.api.controllers
 
+import com.koalagroup.koala.api.CurrentActor
 import com.koalagroup.koala.api.dto.AdminUserDto
+import com.koalagroup.koala.api.dto.ChangeRoleDto
+import com.koalagroup.koala.api.dto.ChangeStatusDto
 import com.koalagroup.koala.api.dto.PagedResponse
 import com.koalagroup.koala.api.dto.toAdminUserDto
 import com.koalagroup.koala.api.dto.toResponse
 import com.koalagroup.koala.domain.entities.UserStatus
+import com.koalagroup.koala.domain.services.AdminUserManagementService
 import com.koalagroup.koala.domain.services.AdminUsersService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.util.UUID
 
 @RestController
 @RequestMapping("api/admin/users")
 @Tag(name = "Admin - users")
 class AdminUsersController(
-    private val adminUsersService: AdminUsersService
+    private val adminUsersService: AdminUsersService,
+    private val adminUserManagementService: AdminUserManagementService,
+    private val currentActor: CurrentActor
 ) {
     // TODO: restrict to the ADMIN role once authentication / RBAC (Spring Security + JWT) is in place.
     //  Until then the endpoint is open, like the rest of the API (see SecurityConfig).
@@ -44,5 +56,44 @@ class AdminUsersController(
     ): ResponseEntity<PagedResponse<AdminUserDto>> {
         val users = adminUsersService.getUsers(search, role, status, page, size, sort)
         return ResponseEntity.ok(users.toResponse { it.toAdminUserDto() })
+    }
+
+    // TODO: like the list above, the endpoints below must be restricted to the ADMIN role once authentication
+    //  / RBAC is in place. Until then the acting administrator is unknown (null) in the audit log.
+    @PatchMapping("{id}/role")
+    @Operation(
+        summary = "Change a user's role",
+        description = "Assigns one of the existing roles. Administrators cannot change their own role or demote the last active administrator."
+    )
+    fun changeRole(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: ChangeRoleDto
+    ): ResponseEntity<AdminUserDto> {
+        val user = adminUserManagementService.changeRole(currentActor.id(), id, request.role)
+        return ResponseEntity.ok(user.toAdminUserDto())
+    }
+
+    @PatchMapping("{id}/status")
+    @Operation(
+        summary = "Change an account status",
+        description = "Blocks (BLOCKED), unblocks (ACTIVE), deactivates (INACTIVE) or reactivates (ACTIVE) an account. " +
+            "Administrators cannot change their own status or block the last active administrator."
+    )
+    fun changeStatus(
+        @PathVariable id: UUID,
+        @Valid @RequestBody request: ChangeStatusDto
+    ): ResponseEntity<AdminUserDto> {
+        val user = adminUserManagementService.changeStatus(currentActor.id(), id, request.status!!)
+        return ResponseEntity.ok(user.toAdminUserDto())
+    }
+
+    @DeleteMapping("{id}")
+    @Operation(
+        summary = "Delete (deactivate) a user",
+        description = "Soft delete: the account and its data are kept and the status becomes INACTIVE. Can be undone with the status endpoint."
+    )
+    fun deleteUser(@PathVariable id: UUID): ResponseEntity<Void> {
+        adminUserManagementService.deactivate(currentActor.id(), id)
+        return ResponseEntity.noContent().build()
     }
 }

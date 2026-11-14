@@ -25,4 +25,5 @@ class PostgresRoleEntity(
 )
 
 interface PostgresRoleJpaRepository : JpaRepository<PostgresRoleEntity, Long> {
+    fun findByName(name: String): PostgresRoleEntity?
 }
