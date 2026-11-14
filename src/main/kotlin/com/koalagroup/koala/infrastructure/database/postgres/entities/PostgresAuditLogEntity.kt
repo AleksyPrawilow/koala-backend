@@ -13,6 +13,7 @@ import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import java.time.Instant
 import java.util.UUID
 
@@ -46,6 +47,6 @@ class PostgresAuditLogEntity(
     var id: Long? = null
 )
 
-interface PostgresAuditLogJpaRepository : JpaRepository<PostgresAuditLogEntity, Long> {
+interface PostgresAuditLogJpaRepository : JpaRepository<PostgresAuditLogEntity, Long>, JpaSpecificationExecutor<PostgresAuditLogEntity> {
     fun findByTargetUserIdOrderByCreatedAtDesc(targetUserId: UUID): List<PostgresAuditLogEntity>
 }
