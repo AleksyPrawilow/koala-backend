@@ -12,7 +12,10 @@ fun User.toEntity(): PostgresUserEntity {
         email = this.email,
         passwordSalt = this.passwordSalt,
         passwordHash = this.passwordHash,
-        role = this.role.toEntity()
+        role = this.role.toEntity(),
+        status = this.status,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt
     )
 }
 
@@ -24,6 +27,9 @@ fun PostgresUserEntity.toDomain(): User {
         email = this.email,
         passwordSalt = this.passwordSalt,
         passwordHash = this.passwordHash,
-        role = this.role.toDomain()
+        role = this.role.toDomain(),
+        status = this.status,
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt
     )
 }
