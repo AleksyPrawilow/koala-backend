@@ -34,7 +34,7 @@ class AuthService(
             throw InvalidRoleException("Role ${requestDto.role.name} is not allowed")
         }
 
-        if (requestDto.role.name == "ORGANISER") {
+        if (requestDto.role.name == Role.ORGANISER) {
             val incomingOrganiserCode: String = requestDto.organiserCode ?: throw InvalidOrganiserCodeException("Organiser Code is required for organisers")
             organiserCodeRepository.useCode(incomingOrganiserCode) ?: throw InvalidOrganiserCodeException("The provided code was not found")
         }

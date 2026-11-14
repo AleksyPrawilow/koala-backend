@@ -6,5 +6,6 @@ data class Role(
 ) {
     companion object {
         const val ADMIN = "ADMIN"
+        const val ORGANISER = "ORGANISER"
     }
 }
