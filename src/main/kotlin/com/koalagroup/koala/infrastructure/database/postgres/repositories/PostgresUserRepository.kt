@@ -4,7 +4,6 @@ import com.koalagroup.koala.domain.entities.User
 import com.koalagroup.koala.domain.queries.PagedResult
 import com.koalagroup.koala.domain.queries.SortDirection
 import com.koalagroup.koala.domain.queries.UserQuery
-import com.koalagroup.koala.domain.queries.UserSortField
 import com.koalagroup.koala.domain.repositories.UserRepository
 import com.koalagroup.koala.infrastructure.database.postgres.entities.PostgresUserJpaRepository
 import com.koalagroup.koala.infrastructure.database.postgres.mappers.toDomain
@@ -44,17 +43,4 @@ class PostgresUserRepository(
             totalElements = result.totalElements
         )
     }
-
-    private fun UserSortField.toProperty(): String = when (this) {
-        UserSortField.FIRST_NAME -> "firstName"
-        UserSortField.LAST_NAME -> "lastName"
-        UserSortField.EMAIL -> "email"
-        UserSortField.ROLE -> "role.name"
-        UserSortField.STATUS -> "status"
-        UserSortField.CREATED_AT -> "createdAt"
-    }
-
-    private fun UserSortField.isText(): Boolean =
-        this == UserSortField.FIRST_NAME || this == UserSortField.LAST_NAME ||
-            this == UserSortField.EMAIL || this == UserSortField.ROLE
 }

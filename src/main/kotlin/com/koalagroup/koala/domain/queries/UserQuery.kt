@@ -13,6 +13,22 @@ enum class UserSortField(val apiName: String) {
     STATUS("status"),
     CREATED_AT("createdAt");
 
+    /** Name of the persisted property the list is sorted by. */
+    fun toProperty(): String = when (this) {
+        FIRST_NAME -> "firstName"
+        LAST_NAME -> "lastName"
+        EMAIL -> "email"
+        ROLE -> "role.name"
+        STATUS -> "status"
+        CREATED_AT -> "createdAt"
+    }
+
+    /** Text fields are sorted case-insensitively. */
+    fun isText(): Boolean = when (this) {
+        FIRST_NAME, LAST_NAME, EMAIL, ROLE -> true
+        STATUS, CREATED_AT -> false
+    }
+
     companion object {
         fun fromApiName(name: String): UserSortField? = entries.firstOrNull { it.apiName.equals(name, ignoreCase = true) }
     }
