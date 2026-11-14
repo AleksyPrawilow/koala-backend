@@ -1,3 +1,3 @@
 package com.koalagroup.koala.domain.exceptions
 
-class InvalidRoleException(message: String) : Exception(message)
+class InvalidRoleException(message: String) : RuntimeException(message)

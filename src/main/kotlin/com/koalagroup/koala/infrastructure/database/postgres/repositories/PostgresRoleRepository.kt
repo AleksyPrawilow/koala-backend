@@ -15,4 +15,8 @@ class PostgresRoleRepository(
             it.toDomain()
         }
     }
+
+    override fun findByName(name: String): Role? {
+        return jpaRepository.findByName(name)?.toDomain()
+    }
 }
