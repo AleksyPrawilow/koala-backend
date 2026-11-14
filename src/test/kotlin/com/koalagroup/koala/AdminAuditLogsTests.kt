@@ -187,7 +187,7 @@ class AdminAuditLogsTests {
     @Test
     fun `rejects invalid parameters with 400`() {
         list("size" to "0").andExpect(status().isBadRequest)
-        list("size" to "100001").andExpect(status().isBadRequest)
+        list("size" to "101").andExpect(status().isBadRequest)
         list("page" to "-1").andExpect(status().isBadRequest)
         list("action" to "DELETED").andExpect(status().isBadRequest)
         list("userId" to "not-a-uuid").andExpect(status().isBadRequest)
