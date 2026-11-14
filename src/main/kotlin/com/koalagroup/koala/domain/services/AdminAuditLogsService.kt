@@ -59,7 +59,7 @@ class AdminAuditLogsService(
     }
 
     private companion object {
-        const val MAX_PAGE_SIZE = 100_000
+        const val MAX_PAGE_SIZE = 100
         const val SORT_FIELD = "createdAt"
     }
 }
