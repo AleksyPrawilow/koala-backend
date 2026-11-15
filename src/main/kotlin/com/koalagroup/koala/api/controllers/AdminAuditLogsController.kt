@@ -8,6 +8,8 @@ import com.koalagroup.koala.domain.entities.AuditAction
 import com.koalagroup.koala.domain.services.AdminAuditLogsService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,6 +31,12 @@ class AdminAuditLogsController(
     @Operation(
         summary = "List audit log entries",
         description = "Paginated history of role and status changes, newest first. Optional filters are combined with AND."
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Requested page of audit log entries."),
+            ApiResponse(responseCode = "400", description = "Invalid filter, page, size or sort parameter.")
+        ]
     )
     fun getAuditLogs(
         @Parameter(description = "Only changes made by this administrator.")
