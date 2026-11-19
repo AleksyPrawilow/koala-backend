@@ -25,6 +25,11 @@ class PostgresUserRepository(
     }
 
     @Transactional(readOnly = true)
+    override fun findByEmail(email: String): User? {
+        return jpaRepository.findByEmailIgnoreCase(email)?.toDomain()
+    }
+
+    @Transactional(readOnly = true)
     override fun findById(id: UUID): User? {
         return jpaRepository.findById(id).map { it.toDomain() }.orElse(null)
     }

@@ -21,3 +21,13 @@ spring:
     error:
       include-stacktrace: never
       include-message: always
+
+app:
+  security:
+    cors:
+      allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*}
+    jwt:
+      secret: ${JWT_SECRET_BASE64}
+      expiration: ${JWT_EXPIRATION:15m}
+      cookie-secure: ${JWT_COOKIE_SECURE:true}
+      cookie-same-site: ${JWT_COOKIE_SAME_SITE:Lax}

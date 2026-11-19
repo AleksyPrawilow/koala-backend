@@ -20,6 +20,10 @@ import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
+import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
+import org.springframework.security.web.FilterChainProxy
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
@@ -59,10 +63,14 @@ class AdminUserManagementTests {
     private lateinit var admin: UUID
     private lateinit var otherAdmin: UUID
     private lateinit var student: UUID
+    private var authenticatedActor: UUID? = null
 
     @BeforeEach
     fun setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(context).build()
+        mockMvc = MockMvcBuilders.webAppContextSetup(context)
+            .addFilters<DefaultMockMvcBuilder>(context.getBean(FilterChainProxy::class.java))
+            .build()
+        authenticatedActor = null
 
         admin = seed("Ada", "Admin", "ADMIN")
         otherAdmin = seed("Olek", "Admin", "ADMIN")
@@ -92,8 +100,13 @@ class AdminUserManagementTests {
 
     /** Makes [id] the administrator performing the requests (the principal name is the user id). */
     private fun actAs(id: UUID) {
+        authenticatedActor = id
         SecurityContextHolder.getContext().authentication =
-            UsernamePasswordAuthenticationToken(id.toString(), null, emptyList())
+            UsernamePasswordAuthenticationToken(
+                id.toString(),
+                null,
+                listOf(org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))
+            )
     }
 
     private fun reload(id: UUID): User {
@@ -112,12 +125,23 @@ class AdminUserManagementTests {
         mockMvc.perform(
             patch("/api/admin/users/{id}/role", id).contentType(MediaType.APPLICATION_JSON)
                 .content("""{"role":"$role"}""")
+                .with(user(authenticatedActor?.toString() ?: "test").roles("ADMIN"))
+                .with(csrf())
         )
 
     private fun changeStatus(id: Any, status: String): ResultActions =
         mockMvc.perform(
             patch("/api/admin/users/{id}/status", id).contentType(MediaType.APPLICATION_JSON)
                 .content("""{"status":"$status"}""")
+                .with(user(authenticatedActor?.toString() ?: "test").roles("ADMIN"))
+                .with(csrf())
+        )
+
+    private fun deleteUser(id: Any): ResultActions =
+        mockMvc.perform(
+            delete("/api/admin/users/{id}", id)
+                .with(user(authenticatedActor?.toString() ?: "test").roles("ADMIN"))
+                .with(csrf())
         )
 
     private fun ResultActions.body(): String = andReturn().response.contentAsString
@@ -206,7 +230,7 @@ class AdminUserManagementTests {
     }
 
     @Test
-    fun `the actor is empty in the audit entry while nobody is authenticated`() {
+    fun `the actor is empty in the audit entry while principal is not a UUID`() {
         changeStatus(student, "BLOCKED").andExpect(status().isOk)
 
         assertNull(audits(student).single().actorId)
@@ -224,6 +248,8 @@ class AdminUserManagementTests {
         changeStatus(student, "DELETED").andExpect(status().isBadRequest)
         mockMvc.perform(
             patch("/api/admin/users/{id}/status", student).contentType(MediaType.APPLICATION_JSON).content("{}")
+                .with(user("test").roles("ADMIN"))
+                .with(csrf())
         ).andExpect(status().isBadRequest)
         assertEquals(UserStatus.ACTIVE, reload(student).status)
     }
@@ -253,7 +279,7 @@ class AdminUserManagementTests {
     fun `delete deactivates the account instead of removing it`() {
         actAs(admin)
 
-        mockMvc.perform(delete("/api/admin/users/{id}", student)).andExpect(status().isNoContent)
+        deleteUser(student).andExpect(status().isNoContent)
 
         assertEquals(UserStatus.INACTIVE, reload(student).status)
         val log = audits(student).single()
@@ -263,8 +289,8 @@ class AdminUserManagementTests {
 
     @Test
     fun `deleting twice is harmless and logged once`() {
-        mockMvc.perform(delete("/api/admin/users/{id}", student)).andExpect(status().isNoContent)
-        mockMvc.perform(delete("/api/admin/users/{id}", student)).andExpect(status().isNoContent)
+        deleteUser(student).andExpect(status().isNoContent)
+        deleteUser(student).andExpect(status().isNoContent)
 
         assertEquals(1, audits(student).size)
     }
@@ -272,12 +298,13 @@ class AdminUserManagementTests {
     @Test
     fun `an administrator cannot delete themselves and the last administrator cannot be deleted`() {
         actAs(admin)
-        mockMvc.perform(delete("/api/admin/users/{id}", admin)).andExpect(status().isForbidden)
+        deleteUser(admin).andExpect(status().isForbidden)
 
         SecurityContextHolder.clearContext()
+        authenticatedActor = null
         jdbc.update("UPDATE users SET status = 'INACTIVE' WHERE id = ?", otherAdmin)
         entityManager.clear()
-        mockMvc.perform(delete("/api/admin/users/{id}", admin)).andExpect(status().isConflict)
+        deleteUser(admin).andExpect(status().isConflict)
 
         assertEquals(UserStatus.ACTIVE, reload(admin).status)
     }
@@ -289,7 +316,7 @@ class AdminUserManagementTests {
         val unknown = UUID.randomUUID()
         changeRole(unknown, "USER").andExpect(status().isNotFound)
         changeStatus(unknown, "BLOCKED").andExpect(status().isNotFound)
-        mockMvc.perform(delete("/api/admin/users/{id}", unknown)).andExpect(status().isNotFound)
+        deleteUser(unknown).andExpect(status().isNotFound)
 
         changeRole("not-a-uuid", "USER").andExpect(status().isBadRequest)
         val body = changeStatus(unknown, "BLOCKED").andExpect(status().isNotFound).body()
@@ -307,7 +334,7 @@ class AdminUserManagementTests {
             post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(
                 """{"email":"$email","password":"Password1","firstName":"Eve","lastName":"Hacker",
                     "role":{"id":$adminRoleId,"name":"ADMIN"}}"""
-            )
+            ).with(csrf())
         ).andExpect(status().isBadRequest)
 
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM users WHERE email = ?", Int::class.java, email))
