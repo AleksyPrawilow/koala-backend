@@ -39,6 +39,11 @@ class AuthServiceTests {
             created.add(user)
             return user
         }
+
+        override fun findByEmail(email: String): User? {
+            TODO("Not yet implemented")
+        }
+
         override fun search(query: UserQuery): PagedResult<User> = throw UnsupportedOperationException()
         override fun findById(id: UUID): User? = throw UnsupportedOperationException()
         override fun update(user: User): User = throw UnsupportedOperationException()

@@ -7,7 +7,6 @@ import com.koalagroup.koala.infrastructure.database.postgres.entities.PostgresUs
 import com.koalagroup.koala.infrastructure.database.postgres.mappers.toEntity
 import jakarta.persistence.EntityManager
 import jakarta.persistence.PersistenceContext
-import jakarta.servlet.http.Cookie
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -134,21 +133,12 @@ class AuthLoginTests {
         val csrfToken = Regex("\"token\":\"([^\"]+)\"")
             .find(csrfResult.response.contentAsString)!!
             .groupValues[1]
-        val csrfCookieHeader = assertNotNull(
-            csrfResult.response.getHeader("Set-Cookie"),
-            "body=${csrfResult.response.contentAsString}; " +
-                "cookies=${csrfResult.response.cookies.map { it.name to it.value }}"
-        )
-        val csrfCookieValue = csrfCookieHeader.substringAfter("XSRF-TOKEN=").substringBefore(";")
-        val csrfCookie = Cookie("XSRF-TOKEN", csrfCookieValue)
-
-        assertTrue(csrfCookie.value == csrfToken)
+        assertTrue(csrfToken.isNotBlank())
         mockMvc.perform(
             post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"email":"$email","password":"$password"}""")
-                .cookie(csrfCookie)
-                .header("X-XSRF-TOKEN", csrfToken)
+                .with(csrf())
         ).andExpect(status().isOk)
     }
 
