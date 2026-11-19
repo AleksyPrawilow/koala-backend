@@ -35,8 +35,6 @@ class AdminUsersController(
     private val adminUserManagementService: AdminUserManagementService,
     private val currentActor: CurrentActor
 ) {
-    // TODO: restrict to the ADMIN role once authentication / RBAC (Spring Security + JWT) is in place.
-    //  Until then the endpoint is open, like the rest of the API (see SecurityConfig).
     @GetMapping
     @Operation(
         summary = "List users",
@@ -66,8 +64,6 @@ class AdminUsersController(
         return ResponseEntity.ok(users.toResponse { it.toAdminUserDto() })
     }
 
-    // TODO: like the list above, the endpoints below must be restricted to the ADMIN role once authentication
-    //  / RBAC is in place. Until then the acting administrator is unknown (null) in the audit log.
     @PatchMapping("{id}/role")
     @Operation(
         summary = "Change a user's role",

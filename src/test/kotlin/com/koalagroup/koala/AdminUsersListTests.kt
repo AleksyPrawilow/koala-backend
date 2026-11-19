@@ -14,6 +14,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.queryForObject
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
+import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
+import org.springframework.security.web.FilterChainProxy
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -49,7 +52,9 @@ class AdminUsersListTests {
 
     @BeforeEach
     fun setUp() {
-        mockMvc = MockMvcBuilders.webAppContextSetup(context).build()
+        mockMvc = MockMvcBuilders.webAppContextSetup(context)
+            .addFilters<DefaultMockMvcBuilder>(context.getBean(FilterChainProxy::class.java))
+            .build()
 
         seed("Alice", "Nowak", "alice.nowak@$domain", "USER", UserStatus.ACTIVE)
         seed("Bob", "Nowak", "bob.nowak@$domain", "GUARDIAN", UserStatus.BLOCKED)
@@ -81,6 +86,7 @@ class AdminUsersListTests {
         query["search"] = listOfNotNull(domain, query["search"]).joinToString(" ")
         return mockMvc.perform(
             get("/api/admin/users").apply { query.forEach { (name, value) -> param(name, value) } }
+                .with(user("test").roles("ADMIN"))
         )
     }
 

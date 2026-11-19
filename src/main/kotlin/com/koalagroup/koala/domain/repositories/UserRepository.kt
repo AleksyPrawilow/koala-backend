@@ -8,6 +8,7 @@ import java.util.UUID
 
 interface UserRepository {
     fun create(user: User): User
+    fun findByEmail(email: String): User?
     fun search(query: UserQuery): PagedResult<User>
     fun findById(id: UUID): User?
     fun update(user: User): User
