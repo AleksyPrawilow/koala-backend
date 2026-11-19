@@ -4,6 +4,7 @@ import com.koalagroup.koala.api.dto.CreateUserDto
 import com.koalagroup.koala.domain.entities.OrganiserCode
 import com.koalagroup.koala.domain.entities.Role
 import com.koalagroup.koala.domain.entities.User
+import com.koalagroup.koala.domain.entities.UserStatus
 import com.koalagroup.koala.domain.exceptions.InvalidOrganiserCodeException
 import com.koalagroup.koala.domain.exceptions.InvalidRoleException
 import com.koalagroup.koala.domain.exceptions.PasswordCreationFailureException
@@ -22,6 +23,14 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
     private val emailService: EmailService
 ) {
+    fun authenticate(email: String, password: String): User? {
+        val user = userRepository.findByEmail(email) ?: return null
+        if (user.status != UserStatus.ACTIVE || !passwordEncoder.matches(password, user.passwordHash)) {
+            return null
+        }
+        return user
+    }
+
     fun registerUser(requestDto: CreateUserDto): User {
         val encodedPassword = passwordEncoder.encode(requestDto.password) ?: throw PasswordCreationFailureException("Password required")
 

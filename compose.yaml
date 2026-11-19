@@ -43,6 +43,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-koala_password}
       MAIL_HOST: ${MAIL_HOST:-mailpit}
       MAIL_PORT: ${MAIL_PORT:-1025}
+      CORS_ALLOWED_ORIGIN_PATTERNS: ${CORS_ALLOWED_ORIGIN_PATTERNS:-http://localhost:*,https://localhost:*}
+      JWT_SECRET_BASE64: ${JWT_SECRET_BASE64:-}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-15m}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-true}
+      JWT_COOKIE_SAME_SITE: ${JWT_COOKIE_SAME_SITE:-Lax}
 
 volumes:
   postgres_data:

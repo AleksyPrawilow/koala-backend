@@ -60,6 +60,7 @@ class PostgresUserEntity(
 )
 
 interface PostgresUserJpaRepository : JpaRepository<PostgresUserEntity, UUID>, JpaSpecificationExecutor<PostgresUserEntity> {
+    fun findByEmailIgnoreCase(email: String): PostgresUserEntity?
     fun countByRoleNameAndStatus(roleName: String, status: UserStatus): Long
     fun save(user: PostgresUserEntity): PostgresUserEntity
 }
