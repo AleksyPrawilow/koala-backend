@@ -15,9 +15,34 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:false}
   application:
     name: koala
   web:
     error:
       include-stacktrace: never
       include-message: always
+
+koala:
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:no-reply@koala.local}
+app:
+  security:
+    cors:
+      allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*}
+    jwt:
+      secret: ${JWT_SECRET_BASE64}
+      expiration: ${JWT_EXPIRATION:15m}
+      cookie-secure: ${JWT_COOKIE_SECURE:true}
+      cookie-same-site: ${JWT_COOKIE_SAME_SITE:Lax}

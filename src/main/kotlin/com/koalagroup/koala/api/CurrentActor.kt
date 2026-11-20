@@ -9,8 +9,8 @@ import java.util.UUID
 @Component
 class CurrentActor {
     /**
-     * Id of the authenticated user (the principal name is expected to be the user id), or null when nobody is
-     * authenticated. Until Spring Security / JWT authentication is in place this is always null.
+     * Id of the authenticated user (the JWT subject is expected to be the user id), or null when nobody is
+     * authenticated.
      */
     fun id(): UUID? {
         val authentication = SecurityContextHolder.getContext().authentication ?: return null

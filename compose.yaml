@@ -17,6 +17,14 @@ services:
       timeout: 5s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: koala-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   app:
     build: .
     image: koala-app:latest
@@ -26,12 +34,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     ports:
       - "127.0.0.1:8080:8080"
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-koala}
       DB_USER: ${DB_USER:-koala_user}
       DB_PASSWORD: ${DB_PASSWORD:-koala_password}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      CORS_ALLOWED_ORIGIN_PATTERNS: ${CORS_ALLOWED_ORIGIN_PATTERNS:-http://localhost:*,https://localhost:*}
+      JWT_SECRET_BASE64: ${JWT_SECRET_BASE64:-}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-15m}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-true}
+      JWT_COOKIE_SAME_SITE: ${JWT_COOKIE_SAME_SITE:-Lax}
 
 networks:
   default:
